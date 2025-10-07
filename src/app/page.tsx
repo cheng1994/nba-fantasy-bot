@@ -53,7 +53,7 @@ export default function Chat() {
       <div 
         ref={scrollAreaRef}
         onScroll={onScroll}
-        className="flex-1 overflow-y-auto px-4 pt-24 pb-32"
+        className="no-scrollbar flex-1 overflow-y-auto px-4 pt-24 pb-32"
       >
         <Messages messages={messages} />
         <ChatScrollAnchor
