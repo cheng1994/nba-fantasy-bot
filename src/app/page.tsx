@@ -1,44 +1,70 @@
 'use client';
 
+import Messages from '@/components/chat/chat';
+import ChatForm from '@/components/chat-input/form';
+import { ChatScrollAnchor } from '@/components/scroll-anchor/scroll-anchor';
 import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function Chat() {
-  const [input, setInput] = useState('');
-  const { messages, sendMessage } = useChat();
-  console.log(messages);
-  return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      <div className="space-y-4">
-        {messages.map(m => (
-          <div key={m.id} className="whitespace-pre-wrap">
-            <div>
-              <div className="font-bold">{m.role}</div>
-              {m.parts.map((part, index) => {
-                switch (part.type) {
-                  case 'text':
-                    return <p key={index}>{part.text}</p>;
-                }
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
+  const { sendMessage, messages, status } = useChat();
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          sendMessage({ text: input });
-          setInput('');
-        }}
+  const onScroll = useCallback(() => {
+    if (!scrollAreaRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 5;
+    setIsAtBottom(isAtBottom);
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    if (!scrollAreaRef.current) return;
+    
+    const scrollAreaElement = scrollAreaRef.current;
+    scrollAreaElement.scrollTop = scrollAreaElement.scrollHeight - scrollAreaElement.clientHeight;
+    setIsAtBottom(true);
+  }, []);
+
+  // Scroll to bottom when new messages are added
+  useEffect(() => {
+    if (isAtBottom) {
+      scrollToBottom();
+    }
+  }, [messages, isAtBottom, scrollToBottom]);
+
+  // Scroll to bottom when streaming starts
+  useEffect(() => {
+    if (status === 'streaming' && isAtBottom) {
+      scrollToBottom();
+    }
+  }, [status, isAtBottom, scrollToBottom]);
+
+  const handleSubmit = useCallback((input: string) => {
+    sendMessage({ text: input });
+    // Scroll to bottom immediately when user sends a message
+    setTimeout(() => scrollToBottom(), 100);
+  }, [sendMessage, scrollToBottom]);
+
+  return (
+    <div className="flex flex-col h-screen w-full max-w-4xl mx-auto">
+      {/* Messages container with fixed height and scroll */}
+      <div 
+        ref={scrollAreaRef}
+        onScroll={onScroll}
+        className="flex-1 overflow-y-auto px-4 pt-24 pb-32"
       >
-        <input
-          className="fixed bottom-0 w-full max-w-md p-2 mb-8 border border-gray-300 rounded shadow-xl"
-          value={input}
-          placeholder="Say something..."
-          onChange={e => setInput(e.currentTarget.value)}
+        <Messages messages={messages} />
+        <ChatScrollAnchor
+          trackVisibility={true}
+          isAtBottom={isAtBottom}
+          scrollAreaRef={scrollAreaRef}
         />
-      </form>
+      </div>
+      
+      {/* Fixed form at bottom */}
+      <ChatForm onSubmit={handleSubmit} disabled={status === 'streaming'} />
     </div>
   );
 }

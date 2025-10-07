@@ -5,6 +5,7 @@ import { generateObject, tool } from "ai"
 import { sql } from "@vercel/postgres";
 import { Result } from "drizzle-orm/sqlite-core";
 import { z } from "zod";
+import { queryNBANewsTool } from "@/lib/actions/nba-news";
 
 export const queryDatabaseTool = tool({
     description: "Query the database to get information about the NBA",
