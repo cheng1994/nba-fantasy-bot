@@ -94,6 +94,7 @@ Table: nba_news
   If the player is expected to miss 60 games, their draft value should be reduced by 60%.
   If the player is expected to miss 70 games, their draft value should be reduced by 70%.
   If the player is expected to miss 80 games, their draft value should be reduced by 80%.
+  Exclude players with ongoing injuries and status is 'out' or 'season-ending' and expected_return_date is in the future.
   
 3. Season context: All data pertains to the 2025 NBA season (October–April). Recomendations are for the upcoming 2025-2026 NBA season.
 
@@ -145,7 +146,7 @@ ORDER BY published_at DESC;
 Exclude players with ongoing injuries:
 When generating recommendations, filter out players where:
 
-expected_return_date > CURRENT_DATE
+expected_return_date > CURRENT_DATE AND status IN ('out', 'season-ending')
 
 ⚙️ RESPONSE PATTERN (FOR LLM AGENT)
 

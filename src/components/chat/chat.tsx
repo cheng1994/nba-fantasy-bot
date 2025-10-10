@@ -1,7 +1,31 @@
-import { UIMessage } from "@ai-sdk/react";
+import { UIMessage, useChat } from "@ai-sdk/react";
+import { useChatContext } from "./chat-provider";
+import { useEffect } from "react";
+import { Spinner } from "../ui/spinner";
+import { ChatStatus } from "ai";
 
-export default function Messages({messages}: {messages: UIMessage[]}) {
-    
+export default function Messages() {
+    const { chat, clearChat } = useChatContext();
+    const { messages, status } = useChat({chat});
+
+    const renderStatus = (status: ChatStatus) => {
+        switch(status) {
+            case 'error':
+                return (
+                    <>
+                        <div className="italic">Error</div>
+                        <p>An error has occured. Please try again.</p>
+                    </>
+                )
+            case 'streaming': 
+                return (
+                    <div className="flex gap-2 align-items-center">
+                        <Spinner /> <span>Processing... </span>
+                    </div>
+                )
+        }
+    }
+
     return (
         <div className="space-y-4">
             {messages.map(m => (
@@ -17,6 +41,7 @@ export default function Messages({messages}: {messages: UIMessage[]}) {
                 </div>
             </div>
             ))}
+            {renderStatus(status)}
         </div>
     )
 }

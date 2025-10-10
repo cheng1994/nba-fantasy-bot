@@ -13,10 +13,7 @@ export const queryDatabaseTool = tool({
         query: z.string().describe('The SQL query to execute.'),
     }),
     execute: async ({ query }) => {
-      debugger;
-        console.log('Executing query:', query);
         const data = await runGenerateSQLQuery(query);
-        console.log('Data:', data);
         return data as any; 
     },
 })
@@ -169,7 +166,6 @@ export const runGenerateSQLQuery = async (query: string) => {
     let data: any;
     try {
       data = await sql.query(query);
-      console.log('Data returned:', data);
     } catch (e: any) {
       if (e.message.includes('relation "unicorns" does not exist')) {
         console.log(

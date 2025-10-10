@@ -1,70 +1,47 @@
-'use client';
+import { Metadata } from "next";
 
-import Messages from '@/components/chat/chat';
-import ChatForm from '@/components/chat-input/form';
-import { ChatScrollAnchor } from '@/components/scroll-anchor/scroll-anchor';
-import { useChat } from '@ai-sdk/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+export const metadata: Metadata = {
+  title: {
+    template: '%s | NBA Fantasy Draft Assistant',
+    default: 'NBA Fantasy Draft Assistant',
+  },
+  description: 'Your AI-powered NBA fantasy basketball assistant',
+}
 
-export default function Chat() {
-  const { sendMessage, messages, status } = useChat();
-  const [isAtBottom, setIsAtBottom] = useState(true);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-  const onScroll = useCallback(() => {
-    if (!scrollAreaRef.current) return;
-    
-    const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 5;
-    setIsAtBottom(isAtBottom);
-  }, []);
-
-  const scrollToBottom = useCallback(() => {
-    if (!scrollAreaRef.current) return;
-    
-    const scrollAreaElement = scrollAreaRef.current;
-    scrollAreaElement.scrollTop = scrollAreaElement.scrollHeight - scrollAreaElement.clientHeight;
-    setIsAtBottom(true);
-  }, []);
-
-  // Scroll to bottom when new messages are added
-  useEffect(() => {
-    if (isAtBottom) {
-      scrollToBottom();
-    }
-  }, [messages, isAtBottom, scrollToBottom]);
-
-  // Scroll to bottom when streaming starts
-  useEffect(() => {
-    if (status === 'streaming' && isAtBottom) {
-      scrollToBottom();
-    }
-  }, [status, isAtBottom, scrollToBottom]);
-
-  const handleSubmit = useCallback((input: string) => {
-    sendMessage({ text: input });
-    // Scroll to bottom immediately when user sends a message
-    setTimeout(() => scrollToBottom(), 100);
-  }, [sendMessage, scrollToBottom]);
-
+export default function Page() {
   return (
-    <div className="flex flex-col h-screen w-full max-w-4xl mx-auto">
-      {/* Messages container with fixed height and scroll */}
-      <div 
-        ref={scrollAreaRef}
-        onScroll={onScroll}
-        className="no-scrollbar flex-1 overflow-y-auto px-4 pt-24 pb-32"
-      >
-        <Messages messages={messages} />
-        <ChatScrollAnchor
-          trackVisibility={true}
-          isAtBottom={isAtBottom}
-          scrollAreaRef={scrollAreaRef}
-        />
+    <div className="flex flex-col items-center justify-center h-full w-full p-8">
+      <h1 className="text-4xl font-bold mb-4">Welcome to NBA Fantasy Draft Assistant</h1>
+      <p className="text-muted-foreground text-center max-w-2xl mb-8">
+        Get expert advice on your fantasy basketball draft with AI-powered insights. 
+        Click the chat icon in the header to start asking questions!
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
+        <div className="p-6 border border-border rounded-lg">
+          <h2 className="text-xl font-semibold mb-2">Player Analysis</h2>
+          <p className="text-muted-foreground">
+            Get detailed stats and insights on any NBA player to help you make informed draft decisions.
+          </p>
+        </div>
+        <div className="p-6 border border-border rounded-lg">
+          <h2 className="text-xl font-semibold mb-2">Draft Strategy</h2>
+          <p className="text-muted-foreground">
+            Receive personalized advice on draft strategy, sleepers, and value picks.
+          </p>
+        </div>
+        <div className="p-6 border border-border rounded-lg">
+          <h2 className="text-xl font-semibold mb-2">Real-time News</h2>
+          <p className="text-muted-foreground">
+            Stay updated with the latest NBA news and how it impacts fantasy value.
+          </p>
+        </div>
+        <div className="p-6 border border-border rounded-lg">
+          <h2 className="text-xl font-semibold mb-2">Statistical Insights</h2>
+          <p className="text-muted-foreground">
+            Access comprehensive NBA statistics to identify trends and opportunities.
+          </p>
+        </div>
       </div>
-      
-      {/* Fixed form at bottom */}
-      <ChatForm onSubmit={handleSubmit} disabled={status === 'streaming'} />
     </div>
   );
 }
