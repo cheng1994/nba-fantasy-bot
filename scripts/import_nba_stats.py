@@ -11,6 +11,10 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from typing import Optional, Dict, Any
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -42,6 +46,20 @@ class NBAStatsImporter:
         """Create the NBA stats table if it doesn't exist."""
         try:
             with self.connection.cursor() as cursor:
+                # Check if table already exists
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_schema = 'public' 
+                        AND table_name = 'nba_stats'
+                    );
+                """)
+                table_exists = cursor.fetchone()[0]
+                
+                if table_exists:
+                    logger.info("NBA stats table already exists, skipping creation")
+                    return True
+                
                 # Read and execute the SQL file
                 sql_file_path = os.path.join(os.path.dirname(__file__), '..', 'sql', 'create_nba_stats_table.sql')
                 with open(sql_file_path, 'r') as f:
@@ -129,10 +147,10 @@ class NBAStatsImporter:
         }
     
     def insert_player_stats(self, stats: Dict[str, Any]) -> bool:
-        """Insert a single player's stats into the database."""
+        """Insert or update a single player's stats in the database (UPSERT)."""
         try:
             with self.connection.cursor() as cursor:
-                insert_query = """
+                upsert_query = """
                 INSERT INTO nba_stats (
                     season, league, player, player_id, age, team, position,
                     fpts_total, fpts, games, games_started, minutes_played,
@@ -154,15 +172,50 @@ class NBAStatsImporter:
                     %(assists)s, %(steals)s, %(blocks)s, %(turnovers)s, %(personal_fouls)s,
                     %(points)s, %(triple_doubles)s
                 )
+                ON CONFLICT (player_id, season, team) 
+                DO UPDATE SET
+                    league = EXCLUDED.league,
+                    player = EXCLUDED.player,
+                    age = EXCLUDED.age,
+                    position = EXCLUDED.position,
+                    fpts_total = EXCLUDED.fpts_total,
+                    fpts = EXCLUDED.fpts,
+                    games = EXCLUDED.games,
+                    games_started = EXCLUDED.games_started,
+                    minutes_played = EXCLUDED.minutes_played,
+                    fg_made = EXCLUDED.fg_made,
+                    fg_attempted = EXCLUDED.fg_attempted,
+                    fg_percentage = EXCLUDED.fg_percentage,
+                    x3p_made = EXCLUDED.x3p_made,
+                    x3p_attempted = EXCLUDED.x3p_attempted,
+                    x3p_percentage = EXCLUDED.x3p_percentage,
+                    x2p_made = EXCLUDED.x2p_made,
+                    x2p_attempted = EXCLUDED.x2p_attempted,
+                    x2p_percentage = EXCLUDED.x2p_percentage,
+                    e_fg_percentage = EXCLUDED.e_fg_percentage,
+                    ft_made = EXCLUDED.ft_made,
+                    ft_attempted = EXCLUDED.ft_attempted,
+                    ft_percentage = EXCLUDED.ft_percentage,
+                    offensive_rebounds = EXCLUDED.offensive_rebounds,
+                    defensive_rebounds = EXCLUDED.defensive_rebounds,
+                    total_rebounds = EXCLUDED.total_rebounds,
+                    assists = EXCLUDED.assists,
+                    steals = EXCLUDED.steals,
+                    blocks = EXCLUDED.blocks,
+                    turnovers = EXCLUDED.turnovers,
+                    personal_fouls = EXCLUDED.personal_fouls,
+                    points = EXCLUDED.points,
+                    triple_doubles = EXCLUDED.triple_doubles,
+                    updated_at = CURRENT_TIMESTAMP
                 """
-                cursor.execute(insert_query, stats)
+                cursor.execute(upsert_query, stats)
                 return True
         except Exception as e:
-            logger.error(f"Failed to insert stats for {stats.get('player', 'unknown')}: {e}")
+            logger.error(f"Failed to upsert stats for {stats.get('player', 'unknown')}: {e}")
             return False
     
-    def import_csv(self, csv_file_path: str, clear_existing: bool = True) -> bool:
-        """Import NBA stats from CSV file."""
+    def import_csv(self, csv_file_path: str, clear_existing: bool = False) -> bool:
+        """Import NBA stats from CSV file. Uses UPSERT to add new players or update existing ones."""
         if not os.path.exists(csv_file_path):
             logger.error(f"CSV file not found: {csv_file_path}")
             return False
@@ -250,12 +303,12 @@ class NBAStatsImporter:
 def main():
     """Main function to run the import process."""
     # Get database connection string from environment variable
-    connection_string = os.getenv('NEON_DATABASE_URL')
+    connection_string = os.getenv('DATABASE_URL')
     
     if not connection_string:
-        logger.error("NEON_DATABASE_URL environment variable not set")
-        logger.info("Please set your Neon database connection string:")
-        logger.info("export NEON_DATABASE_URL='postgresql://username:password@host:port/database'")
+        logger.error("DATABASE_URL environment variable not set")
+        logger.info("Please set your database connection string:")
+        logger.info("export DATABASE_URL='postgresql://username:password@host:port/database'")
         return False
     
     # Initialize importer
@@ -271,7 +324,7 @@ def main():
         
         # Import data
         logger.info("Starting NBA stats import...")
-        if importer.import_csv(csv_file_path):
+        if importer.import_csv(csv_file_path, clear_existing=False):
             logger.info("Import completed successfully!")
             
             # Show summary

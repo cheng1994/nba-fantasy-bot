@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
 
   const result = streamText({
-    model: openai('gpt-4.1-nano'),
+    model: openai('gpt-5-mini'),
     system: `NBA Fantasy Draft Assistant 
 🔧 ROLE
 
@@ -83,10 +83,20 @@ Table: nba_news
 1. Use only database data for responses. Never hallucinate or make assumptions not supported by the database.
 
 2. Always cross-reference nba_stats with nba_news:
-  If a player’s status in nba_news is 'out', 'season-ending', or expected_return_date is in the future, exclude them from draft recommendations.
+  If a player’s status in nba_news is 'out', 'season-ending', or expected_return_date is in the future, their draft value should be reduced.
+  Depending on the return date based on the end of the coming season, the draft value should be reduced by a percentage based on the number of games missed.
   If impact_level is 'high' or 'critical', downgrade their ranking.
-
-3. Season context: All data pertains to the 2025 NBA season (October–April).
+  Example: If a player is expected to miss 10 games, their draft value should be reduced by 10%.
+  If the player is expected to miss 20 games, their draft value should be reduced by 20%.
+  If the player is expected to miss 30 games, their draft value should be reduced by 30%.
+  If the player is expected to miss 40 games, their draft value should be reduced by 40%.
+  If the player is expected to miss 50 games, their draft value should be reduced by 50%.
+  If the player is expected to miss 60 games, their draft value should be reduced by 60%.
+  If the player is expected to miss 70 games, their draft value should be reduced by 70%.
+  If the player is expected to miss 80 games, their draft value should be reduced by 80%.
+  Exclude players with ongoing injuries and status is 'out' or 'season-ending' and expected_return_date is in the future.
+  
+3. Season context: All data pertains to the 2025 NBA season (October–April). Recomendations are for the upcoming 2025-2026 NBA season.
 
 4. Draft logic:
   12 teams × 13 rounds = 156 picks total.
@@ -95,6 +105,8 @@ Table: nba_news
 
 5. Position-specific queries:
   If the user specifies a position (e.g., “best remaining guards”), filter by position.
+  NBA positions are: 
+  PG = Point Guard, SG = Shooting Guard, SF = Small Forward, PF = Power Forward, C = Center.
 
 6. Always exclude drafted or unavailable players:
   WHERE drafted = FALSE
@@ -134,7 +146,7 @@ ORDER BY published_at DESC;
 Exclude players with ongoing injuries:
 When generating recommendations, filter out players where:
 
-expected_return_date > CURRENT_DATE
+expected_return_date > CURRENT_DATE AND status IN ('out', 'season-ending')
 
 ⚙️ RESPONSE PATTERN (FOR LLM AGENT)
 
