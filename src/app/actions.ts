@@ -40,7 +40,7 @@ export const generateQuery = async (input: string) => {
                 player_id VARCHAR(20) NOT NULL,
                 age INTEGER,
                 team VARCHAR(10),
-                position VARCHAR(5),
+                position VARCHAR(20),
                 fpts_total DECIMAL(10,2),
                 fpts DECIMAL(10,2),
                 games INTEGER,

@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS nba_stats (
     player_id VARCHAR(20) NOT NULL,
     age INTEGER,
     team VARCHAR(10),
-    position VARCHAR(5),
+    position VARCHAR(20),
     
     -- Fantasy Points
     fpts_total DECIMAL(10,2),
