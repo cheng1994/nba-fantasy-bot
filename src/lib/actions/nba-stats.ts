@@ -57,8 +57,11 @@ export const fetchNbaStats = async (
                 orderByColumn = nbaStats.player;
                 break;
             case 'fpts_total':
-            default:
                 orderByColumn = nbaStats.fptsTotal;
+                break;
+            case 'projected_fpts':
+            default:
+                orderByColumn = nbaStats.projectedFpts;
                 break;
         }
         

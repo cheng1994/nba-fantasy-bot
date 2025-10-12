@@ -19,15 +19,14 @@ export const nbaStats = pgTable('nba_stats', {
     playerId: varchar('player_id', { length: 20 }).notNull(),
     age: integer('age'),
     team: varchar('team', { length: 10 }),
-    position: varchar('position', { length: 5 }),
+    position: varchar('position', { length: 20 }),
     
     // Fantasy Points
     fptsTotal: decimal('fpts_total', { precision: 10, scale: 2 }),
     fpts: decimal('fpts', { precision: 10, scale: 2 }),
     
     // Projected Fantasy Points (ESPN)
-    projectedFptsTotal: decimal('projected_fpts_total', { precision: 10, scale: 2 }),
-    projectedFptsAvg: decimal('projected_fpts_avg', { precision: 10, scale: 2 }),
+    projectedFpts: decimal('projected_fpts', { precision: 10, scale: 2 }),
     
     // Games
     games: integer('games'),
@@ -98,7 +97,7 @@ export const filterNbaStatsSchema = z.object({
     drafted: z.boolean().optional(),
     limit: z.number().min(1).max(500).default(100),
     offset: z.number().min(0).default(0),
-    orderBy: z.enum(['fpts_total', 'fpts', 'points', 'assists', 'rebounds', 'player']).default('fpts_total'),
+    orderBy: z.enum(['projected_fpts','fpts_total', 'fpts', 'points', 'assists', 'rebounds', 'player']).default('projected_fpts'),
     orderDirection: z.enum(['asc', 'desc']).default('desc'),
 })
 

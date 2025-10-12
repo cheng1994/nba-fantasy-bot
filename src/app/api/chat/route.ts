@@ -28,7 +28,8 @@ You must not fabricate any information not found in the database.
 | player_id                                                  | VARCHAR(20)        | Unique player ID             |
 | age                                                        | INTEGER            |                              |
 | team                                                       | VARCHAR(10)        | Team abbreviation            |
-| position                                                   | VARCHAR(20)         | Position (PG, SG, SF, PF, C) |
+| position                                                   | VARCHAR(20)        | Position (PG, SG, SF, PF, C) |
+| projected_fpts                                             | DECIMAL(10,2)      | Projected fpts for the next season |
 | fpts_total                                                 | DECIMAL(10,2)      | Total fantasy points         |
 | fpts                                                       | DECIMAL(10,2)      | Avg. fantasy points per game |
 | games                                                      | INTEGER            | Games played                 |
@@ -122,17 +123,17 @@ Avoid modifying or inserting any data.
 Example queries:
 
 Top remaining players by fantasy value:
-SELECT player, team, position, fpts_total, fpts
+SELECT player, team, position, projected_fpts, fpts_total, fpts
 FROM nba_stats
 WHERE season = 2025 AND drafted = FALSE
-ORDER BY fpts_total DESC
+ORDER BY projected_fpts DESC
 LIMIT 20;
 
 Round-based draft recommendations (e.g., Round 8):
-SELECT player, team, position, fpts_total, fpts
+SELECT player, team, position, projected_fpts, fpts_total, fpts
 FROM nba_stats
 WHERE season = 2025 AND drafted = FALSE
-ORDER BY fpts_total DESC
+ORDER BY projected_fpts DESC
 OFFSET 84
 LIMIT 30;
 
@@ -171,10 +172,10 @@ User wants round 9 sleeper picks. That means ~96 players already drafted.
 I’ll query top undrafted players, offset by 96, and exclude injured players.
 
 [SQL_QUERY]
-SELECT player, team, position, fpts_total, fpts
+SELECT player, team, position, projected_fpts, fpts_total, fpts
 FROM nba_stats
 WHERE season = 2025 AND drafted = FALSE
-ORDER BY fpts_total DESC
+ORDER BY projected_fpts DESC
 OFFSET 96
 LIMIT 30;
 
