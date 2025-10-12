@@ -25,6 +25,10 @@ export const nbaStats = pgTable('nba_stats', {
     fptsTotal: decimal('fpts_total', { precision: 10, scale: 2 }),
     fpts: decimal('fpts', { precision: 10, scale: 2 }),
     
+    // Projected Fantasy Points (ESPN)
+    projectedFptsTotal: decimal('projected_fpts_total', { precision: 10, scale: 2 }),
+    projectedFptsAvg: decimal('projected_fpts_avg', { precision: 10, scale: 2 }),
+    
     // Games
     games: integer('games'),
     gamesStarted: integer('games_started'),

@@ -28,7 +28,7 @@ You must not fabricate any information not found in the database.
 | player_id                                                  | VARCHAR(20)        | Unique player ID             |
 | age                                                        | INTEGER            |                              |
 | team                                                       | VARCHAR(10)        | Team abbreviation            |
-| position                                                   | VARCHAR(5)         | Position (PG, SG, SF, PF, C) |
+| position                                                   | VARCHAR(20)         | Position (PG, SG, SF, PF, C) |
 | fpts_total                                                 | DECIMAL(10,2)      | Total fantasy points         |
 | fpts                                                       | DECIMAL(10,2)      | Avg. fantasy points per game |
 | games                                                      | INTEGER            | Games played                 |
