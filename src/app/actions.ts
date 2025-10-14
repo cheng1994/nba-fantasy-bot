@@ -41,6 +41,7 @@ export const generateQuery = async (input: string) => {
                 age INTEGER,
                 team VARCHAR(10),
                 position VARCHAR(20),
+                projected_fpts DECIMAL(10,2),
                 fpts_total DECIMAL(10,2),
                 fpts DECIMAL(10,2),
                 games INTEGER,
@@ -74,7 +75,8 @@ export const generateQuery = async (input: string) => {
             )
         
             Only retrival queries are allowed.
-        
+
+            projected_fpts is the average projected fpts for the upcoming season
             fpts_total is the total fantasy points for the player.
             fpts is the fantasy points for the player for the current season.
             games is the number of games the player has played.
@@ -87,6 +89,7 @@ export const generateQuery = async (input: string) => {
                 - age
                 - team
                 - position
+                - projected_fpts
                 - fpts_total
                 - fpts
                 - games

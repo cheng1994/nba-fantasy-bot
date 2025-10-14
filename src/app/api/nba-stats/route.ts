@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
         const filters: FilterNbaStatsParams = {
             limit: 100,
             offset: 0,
-            orderBy: 'fpts_total',
+            orderBy: 'projected_fpts',
             orderDirection: 'desc',
             season: undefined,
             team: undefined,

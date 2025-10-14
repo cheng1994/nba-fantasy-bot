@@ -116,6 +116,7 @@ class NBAStatsImporter:
             'age': safe_int(row.get('age')),
             'team': safe_str(row.get('team')),
             'position': safe_str(row.get('pos')),
+            'projected_fpts': safe_float(row.get('projected_fpts')),
             'fpts_total': safe_float(row.get('fpts_total')),
             'fpts': safe_float(row.get('fpts')),
             'games': safe_int(row.get('g')),
@@ -143,7 +144,7 @@ class NBAStatsImporter:
             'turnovers': safe_int(row.get('tov')),
             'personal_fouls': safe_int(row.get('pf')),
             'points': safe_int(row.get('pts')),
-            'triple_doubles': safe_int(row.get('trp_dbl'))
+            'triple_doubles': safe_int(row.get('trp_dbl')),
         }
     
     def insert_player_stats(self, stats: Dict[str, Any]) -> bool:
@@ -152,7 +153,7 @@ class NBAStatsImporter:
             with self.connection.cursor() as cursor:
                 upsert_query = """
                 INSERT INTO nba_stats (
-                    season, league, player, player_id, age, team, position,
+                    season, league, player, player_id, age, team, position, projected_fpts,
                     fpts_total, fpts, games, games_started, minutes_played,
                     fg_made, fg_attempted, fg_percentage,
                     x3p_made, x3p_attempted, x3p_percentage,
@@ -162,7 +163,7 @@ class NBAStatsImporter:
                     assists, steals, blocks, turnovers, personal_fouls,
                     points, triple_doubles
                 ) VALUES (
-                    %(season)s, %(league)s, %(player)s, %(player_id)s, %(age)s, %(team)s, %(position)s,
+                    %(season)s, %(league)s, %(player)s, %(player_id)s, %(age)s, %(team)s, %(position)s, %(projected_fpts)s,
                     %(fpts_total)s, %(fpts)s, %(games)s, %(games_started)s, %(minutes_played)s,
                     %(fg_made)s, %(fg_attempted)s, %(fg_percentage)s,
                     %(x3p_made)s, %(x3p_attempted)s, %(x3p_percentage)s,
@@ -178,6 +179,7 @@ class NBAStatsImporter:
                     player = EXCLUDED.player,
                     age = EXCLUDED.age,
                     position = EXCLUDED.position,
+                    projected_fpts = EXCLUDED.projected_fpts,
                     fpts_total = EXCLUDED.fpts_total,
                     fpts = EXCLUDED.fpts,
                     games = EXCLUDED.games,
@@ -207,6 +209,7 @@ class NBAStatsImporter:
                     points = EXCLUDED.points,
                     triple_doubles = EXCLUDED.triple_doubles,
                     updated_at = CURRENT_TIMESTAMP
+
                 """
                 cursor.execute(upsert_query, stats)
                 return True
@@ -324,7 +327,7 @@ def main():
         
         # Import data
         logger.info("Starting NBA stats import...")
-        if importer.import_csv(csv_file_path, clear_existing=False):
+        if importer.import_csv(csv_file_path, clear_existing=True):
             logger.info("Import completed successfully!")
             
             # Show summary

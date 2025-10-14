@@ -28,7 +28,8 @@ You must not fabricate any information not found in the database.
 | player_id                                                  | VARCHAR(20)        | Unique player ID             |
 | age                                                        | INTEGER            |                              |
 | team                                                       | VARCHAR(10)        | Team abbreviation            |
-| position                                                   | VARCHAR(20)         | Position (PG, SG, SF, PF, C) |
+| position                                                   | VARCHAR(20)        | Position (PG, SG, SF, PF, C) |
+| projected_fpts                                             | DECIMAL(10,2)      | Projected fpts for the next season |
 | fpts_total                                                 | DECIMAL(10,2)      | Total fantasy points         |
 | fpts                                                       | DECIMAL(10,2)      | Avg. fantasy points per game |
 | games                                                      | INTEGER            | Games played                 |
@@ -122,26 +123,36 @@ Avoid modifying or inserting any data.
 Example queries:
 
 Top remaining players by fantasy value:
-SELECT player, team, position, fpts_total, fpts
+SELECT player, team, position, projected_fpts, fpts_total, fpts
 FROM nba_stats
 WHERE season = 2025 AND drafted = FALSE
-ORDER BY fpts_total DESC
+ORDER BY projected_fpts DESC
 LIMIT 20;
 
 Round-based draft recommendations (e.g., Round 8):
-SELECT player, team, position, fpts_total, fpts
+SELECT player, team, position, projected_fpts, fpts_total, fpts
 FROM nba_stats
 WHERE season = 2025 AND drafted = FALSE
-ORDER BY fpts_total DESC
+ORDER BY projected_fpts DESC
 OFFSET 84
 LIMIT 30;
 
 Injury and availability check:
-SELECT player_name, category, status, expected_return_date, fantasy_impact_note
-FROM nba_news
-WHERE category = 'injury'
-AND status IN ('out', 'day-to-day', 'season-ending')
-ORDER BY published_at DESC;
+SELECT s.player, s.player_id, s.team, s.position, s.projected_fpts,
+  CASE WHEN n.category='injury' AND n.games_missed IS NOT NULL
+       THEN ROUND(s.projected_fpts * (1 - LEAST(n.games_missed,80)/100.0)::numeric,2)
+       ELSE s.projected_fpts
+  END AS adjusted_projected_fpts,
+  n.category, n.impact_level
+FROM nba_stats s
+LEFT JOIN (
+  SELECT DISTINCT ON (player_name) player_name, category, status, expected_return_date, games_missed, impact_level, published_at
+  FROM nba_news
+  ORDER BY player_name, published_at DESC
+) n ON s.player = n.player_name
+WHERE s.season = 2025 AND s.drafted = FALSE
+ORDER BY adjusted_projected_fpts DESC
+LIMIT 50;
 
 Exclude players with ongoing injuries:
 When generating recommendations, filter out players where:
@@ -171,10 +182,10 @@ User wants round 9 sleeper picks. That means ~96 players already drafted.
 I’ll query top undrafted players, offset by 96, and exclude injured players.
 
 [SQL_QUERY]
-SELECT player, team, position, fpts_total, fpts
+SELECT player, team, position, projected_fpts, fpts_total, fpts
 FROM nba_stats
 WHERE season = 2025 AND drafted = FALSE
-ORDER BY fpts_total DESC
+ORDER BY projected_fpts DESC
 OFFSET 96
 LIMIT 30;
 
