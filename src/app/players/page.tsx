@@ -6,12 +6,10 @@ export default async function Players() {
     const players = await fetchNbaStats({
         season: 2025,
         limit: 500,
-        orderBy: 'fpts',
+        orderBy: 'projected_fpts',
         orderDirection: 'desc',
         offset: 0,
     });
-
-    console.log(players);
 
     return (
         <div className="flex flex-col items-center justify-center h-full w-full p-8 pt-18">

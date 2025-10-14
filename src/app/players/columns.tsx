@@ -23,6 +23,12 @@ export const columns: ColumnDef<NbaStats>[] = [
         header: "Position",
     },
     {
+        accessorKey: "projectedFpts",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Proj Fpts" />
+        )
+    },
+    {
         accessorKey: "fptsTotal",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Fpts Total" />
@@ -35,45 +41,27 @@ export const columns: ColumnDef<NbaStats>[] = [
         )
     },
     {
-        accessorKey: "points",
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Points" />
-        )
-    },
-    {
         accessorKey: "assists",
         header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Assists" />
+            <DataTableColumnHeader column={column} title="Asts" />
         )
     },
     {
         accessorKey: "totalRebounds",
         header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Rebounds" />
+            <DataTableColumnHeader column={column} title="Rebs" />
         )
     },
     {
         accessorKey: "steals",
         header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Steals" />
+            <DataTableColumnHeader column={column} title="Stls" />
         )
     },
     {
         accessorKey: "blocks",
         header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Blocks" />
-        )
-    },
-    {
-        accessorKey: "turnovers",
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Turnovers" />
-        )
-    },
-    {
-        accessorKey: "personalFouls",
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Fouls" />
+            <DataTableColumnHeader column={column} title="Blks" />
         )
     },
     {

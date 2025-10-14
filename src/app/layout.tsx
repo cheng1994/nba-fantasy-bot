@@ -4,7 +4,7 @@
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider/theme-provider'
-import { ChatProvider } from '@/components/chat/chat-provider'
+import { ChatProvider, useChatContext } from '@/components/chat/chat-provider'
 import Header from '@/components/header/header'
 import PersistentChat from '@/components/chat/persistent-chat';
 import {
@@ -23,13 +23,11 @@ const geistMono = Geist_Mono({
     subsets: ['latin'],
 })
 
-const queryClient = new QueryClient()
-
 export default function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode
-}>) {
+}>) {    
     return (
         <html className="no-scrollbar" lang="en" suppressHydrationWarning>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased no-scrollbar`}>
