@@ -6,6 +6,7 @@ import { env } from '@/lib/env.mjs'
 import { resources } from './schema/resources'
 import { embeddings } from './schema/embeddings'
 import { nbaStats } from './schema/nba-stats'
+import { fantasyTeams, teamRosters } from './schema/fantasy-teams'
 
 const client = postgres(env.DATABASE_URL)
 export const db = drizzle(client, {
@@ -13,6 +14,8 @@ export const db = drizzle(client, {
         resources,
         embeddings,
         nbaStats,
+        fantasyTeams,
+        teamRosters,
     },
 })
 
@@ -20,3 +23,4 @@ export const db = drizzle(client, {
 export * from './schema/resources'
 export * from './schema/embeddings'
 export * from './schema/nba-stats'
+export * from './schema/fantasy-teams'
