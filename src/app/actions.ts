@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
-import { openai } from "@ai-sdk/openai"
+import { openai } from "@ai-sdk/openai";
+import { anthropic } from '@ai-sdk/anthropic';
 import { generateObject, tool } from "ai"
 // import { sql } from "drizzle-orm";
 import { sql } from "@vercel/postgres";
@@ -23,7 +24,7 @@ export const generateQuery = async (input: string) => {
 
     try {
         const result = await generateObject({
-            model: openai('gpt-4o'),
+            model: anthropic('claude-haiku-4-5-20251001'),
             system: `You are a helpful assistant that can answer questions and help with tasks, regarding NBA fantasy basketball.
             
             You are able to access a SQL (postgress database) to get information about the NBA. The data stored is from the 2024-2025 NBA season.
@@ -130,9 +131,24 @@ export const generateQuery = async (input: string) => {
             personal_fouls is the number of personal fouls.
             points is the number of points.
             triple_doubles is the number of triple doubles.
-        
-            When answering questions, only use the information from the table.
-            If the question is not related to the table, say "I don't know".
+
+            nba_news (
+                id SERIAL PRIMARY KEY,
+                player_name VARCHAR(100) NOT NULL,
+                player_id VARCHAR(20) NOT NULL,
+                team VARCHAR(10),
+                title VARCHAR(500) NOT NULL,
+                content TEXT NOT NULL,
+                summary TEXT NOT NULL,
+            )
+
+            player_wishlist (
+                id SERIAL PRIMARY KEY,
+                owner VARCHAR(100) NOT NULL,
+                player_id VARCHAR(20) NOT NULL,
+                priority INTEGER NOT NULL,
+                notes TEXT NOT NULL,
+            )
             `,
             prompt: `Generate a SQL query to answer the following question: ${input}`,
             schema: z.object({
