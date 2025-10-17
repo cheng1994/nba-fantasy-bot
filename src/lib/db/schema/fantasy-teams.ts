@@ -16,7 +16,7 @@ import { nbaStats } from './nba-stats'
 export const fantasyTeams = pgTable('fantasy_teams', {
     id: serial('id').primaryKey(),
     name: varchar('name', { length: 100 }).notNull(),
-    owner: varchar('owner', { length: 100 }).notNull(), // User identifier
+    owner: text('owner').notNull(), // Stack Auth user ID (user.id)
     season: integer('season').notNull(),
     
     // Metadata
@@ -80,7 +80,7 @@ export type NewTeamRoster = typeof teamRosters.$inferInsert
 // Schema for creating a fantasy team
 export const createFantasyTeamSchema = z.object({
     name: z.string().min(1).max(100),
-    owner: z.string().min(1).max(100),
+    owner: z.string().min(1), // Stack Auth user ID
     season: z.number().int().min(2020).max(2030),
 })
 

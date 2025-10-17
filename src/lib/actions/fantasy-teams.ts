@@ -68,8 +68,8 @@ export const getFantasyTeam = async (teamId: number) => {
                 playerAge: nbaStats.age,
                 fptsTotal: nbaStats.fptsTotal,
                 fpts: nbaStats.fpts,
-                projectedFptsTotal: nbaStats.projectedFptsTotal,
-                projectedFptsAvg: nbaStats.projectedFptsAvg,
+                projectedFpts: nbaStats.projectedFpts,
+
             })
             .from(teamRosters)
             .leftJoin(nbaStats, eq(teamRosters.playerId, nbaStats.playerId))
@@ -256,18 +256,18 @@ export const getAvailablePlayers = async (
         const playerIds = rosterPlayerIds.map(r => r.playerId);
         
         // Get all players for the season, excluding those on the team
-        let query = db
-            .select()
-            .from(nbaStats)
-            .where(eq(nbaStats.season, season));
+        let whereConditions = [eq(nbaStats.season, season)];
         
         if (playerIds.length > 0) {
-            query = query.where(
+            whereConditions.push(
                 sql`${nbaStats.playerId} NOT IN (${sql.join(playerIds.map(id => sql`${id}`), sql`, `)})`
-            ) as any;
+            );
         }
         
-        const results = await query
+        const results = await db
+            .select()
+            .from(nbaStats)
+            .where(and(...whereConditions))
             .orderBy(sql`${nbaStats.fptsTotal} DESC NULLS LAST`)
             .limit(limit);
         

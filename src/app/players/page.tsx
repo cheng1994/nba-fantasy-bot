@@ -1,8 +1,13 @@
 import { fetchNbaStats } from "@/lib/actions/nba-stats";
 import { columns } from "./columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { stackServerApp } from "@/stack/server";
+import { getFantasyTeamsByOwner } from "@/lib/actions/fantasy-teams";
 
 export default async function Players() {
+    const user = await stackServerApp.getUser({ or: "redirect" });
+    const permission = await user.getPermission("players");
+
     const players = await fetchNbaStats({
         season: 2025,
         limit: 500,

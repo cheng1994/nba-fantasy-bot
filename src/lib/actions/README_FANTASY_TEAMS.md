@@ -343,6 +343,101 @@ The following indexes are created for optimal query performance:
 - Use `getTeamRoster()` for roster-only queries
 - `getAvailablePlayers()` efficiently excludes rostered players
 
+## LLM Tools for Chat Interface
+
+The `fantasy-teams-tool.ts` module provides AI-ready tools for the chat interface to give personalized recommendations.
+
+### Available Tools
+
+#### `getFantasyTeamTool`
+Gets a user's fantasy team roster with full player details including stats.
+
+```typescript
+// Used by LLM when user asks about their team
+{
+  teamId: number
+}
+
+// Returns team info + roster with player stats
+```
+
+#### `listUserFantasyTeamsTool`
+Lists all fantasy teams owned by a user.
+
+```typescript
+// Used to find user's team IDs
+{
+  owner: string,
+  season?: number
+}
+
+// Returns array of teams
+```
+
+#### `getAvailablePlayersTool`
+Gets available players not on the team's roster.
+
+```typescript
+// Used to suggest potential draft picks
+{
+  teamId: number,
+  season: number,
+  limit?: number
+}
+
+// Returns top available players sorted by fantasy points
+```
+
+#### `validateRosterTool`
+Validates roster positions and identifies gaps.
+
+```typescript
+// Used to check for missing positions
+{
+  teamId: number
+}
+
+// Returns validation results with missing positions
+```
+
+### Integration with Chat
+
+These tools are integrated into the chat API route (`/api/chat/route.ts`) and allow the LLM to:
+
+1. **Analyze user rosters**: "How's my team looking?"
+2. **Identify weaknesses**: "What positions do I need?"
+3. **Suggest pickups**: "Who should I draft next?"
+4. **Compare players**: "Should I add [Player A] or [Player B]?"
+5. **Cross-reference with news**: Check if roster players have injuries
+
+Example chat workflow:
+```
+User: "How's my team doing?"
+→ LLM uses listUserFantasyTeams(userId)
+→ LLM uses getFantasyTeam(teamId)
+→ LLM uses validateRoster(teamId)
+→ LLM analyzes stats and provides personalized advice
+```
+
+### Adding to Chat Route
+
+```typescript
+import {
+  getFantasyTeamTool,
+  listUserFantasyTeamsTool,
+  getAvailablePlayersTool,
+  validateRosterTool
+} from '@/lib/actions/fantasy-teams-tool';
+
+// In streamText config
+tools: {
+  getFantasyTeam: getFantasyTeamTool,
+  listUserFantasyTeams: listUserFantasyTeamsTool,
+  getAvailablePlayers: getAvailablePlayersTool,
+  validateRoster: validateRosterTool,
+}
+```
+
 ## Future Enhancements
 
 Potential additions:
@@ -352,6 +447,6 @@ Potential additions:
 - Team statistics aggregation
 - Head-to-head matchups
 - League table for multiple teams
-- Player injury status integration
-- Lineup optimization recommendations
+- Player injury status integration (✅ Available via tools)
+- Lineup optimization recommendations (✅ Available via tools)
 

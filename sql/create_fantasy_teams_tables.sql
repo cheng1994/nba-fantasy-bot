@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS fantasy_teams (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    owner VARCHAR(100) NOT NULL,
+    owner TEXT NOT NULL, -- Stack Auth user ID (no FK constraint per auth best practices)
     season INTEGER NOT NULL,
     
     -- Metadata
