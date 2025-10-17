@@ -1,5 +1,6 @@
 import { queryDatabaseTool } from '@/app/actions';
 import { queryNBANewsTool } from '@/lib/actions/nba-news';
+import { getWishlistTool, getWishlistPlayerIdsTool, checkPlayerWishlistStatusTool } from '@/lib/actions/wishlist-tool';
 import { openai } from '@ai-sdk/openai';
 import { convertToModelMessages, stepCountIs, streamText, UIMessage } from 'ai';
 
@@ -11,6 +12,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: openai('gpt-5-mini'),
+    maxOutputTokens: 50000,
     system: `NBA Fantasy Draft Assistant 
 🔧 ROLE
 
@@ -79,6 +81,30 @@ Table: nba_news
 | affected_stats       | TEXT[]             | Stats affected                                       |
 | fantasy_impact_note  | TEXT               | AI analysis of impact                                |
 
+🎯 WISHLIST INTEGRATION
+
+Table: player_wishlist
+The system supports user wishlists for preferred draft targets. When a player is on the user's wishlist, 
+they should be HIGHLIGHTED and BOOSTED in draft recommendations.
+
+Wishlist Priority System:
+- Priority 1 (highest): Boost ranking by approximately 15-20 spots
+- Priority 2-3 (high): Boost ranking by approximately 10-15 spots
+- Priority 4-6 (medium): Boost ranking by approximately 5-10 spots
+- Priority 7-10 (low): Boost ranking by approximately 3-5 spots
+
+Example Scenario:
+- Player A: Rank 5 (based on projected_fpts), NOT on wishlist
+- Player B: Rank 20 (based on projected_fpts), ON wishlist with Priority 1
+→ Player B should be highlighted as a preferred option due to user preference
+
+When making recommendations:
+1. ALWAYS check the user's wishlist first using getWishlistPlayerIds or getWishlist tool
+2. Apply ranking boosts to wishlisted players based on their priority
+3. Clearly indicate when a recommended player is on the user's wishlist (use 🌟 or ⭐ icon)
+4. If a wishlisted player is available near the current draft position, emphasize them as a preferred pick
+5. Balance user preference with statistical value - don't recommend a rank 100 player just because they're wishlisted
+
 🧠 CORE RULES & REASONING LOGIC
 
 1. Use only database data for responses. Never hallucinate or make assumptions not supported by the database.
@@ -113,7 +139,8 @@ Table: nba_news
   WHERE drafted = FALSE
 
 7. Non-NBA or off-topic queries: respond with
-  “I don’t know.”
+  "I don't know."
+
 
 📋 SQL QUERY STYLE GUIDE
 
@@ -129,13 +156,7 @@ WHERE season = 2025 AND drafted = FALSE
 ORDER BY projected_fpts DESC
 LIMIT 20;
 
-Round-based draft recommendations (e.g., Round 8):
-SELECT player, team, position, projected_fpts, fpts_total, fpts
-FROM nba_stats
-WHERE season = 2025 AND drafted = FALSE
-ORDER BY projected_fpts DESC
-OFFSET 84
-LIMIT 30;
+
 
 Injury and availability check:
 SELECT s.player, s.player_id, s.team, s.position, s.projected_fpts,
@@ -164,34 +185,31 @@ expected_return_date > CURRENT_DATE AND status IN ('out', 'season-ending')
 When responding, always structure your reasoning in this pattern:
 
 [THOUGHT]
-Brief reasoning about what type of query/data you’ll need.
+Brief reasoning about what type of query/data you'll need.
+Include checking the user's wishlist if making draft recommendations.
 
-[SQL_QUERY]
-Your actual SQL query string.
 
 [RESULT_INTERPRETATION]
 Plain-language summary or draft pick recommendation based on the results.
+Highlight wishlisted players with 🌟 emoji.
 
-If question is out of scope → “I don’t know.”
+If question is out of scope → "I don't know."
 
 
 Example:
 
 [THOUGHT]
 User wants round 9 sleeper picks. That means ~96 players already drafted. 
-I’ll query top undrafted players, offset by 96, and exclude injured players.
+I'll first check their wishlist, then query top undrafted players, offset by 96, 
+exclude injured players, and apply wishlist boosts.
 
-[SQL_QUERY]
-SELECT player, team, position, projected_fpts, fpts_total, fpts
-FROM nba_stats
-WHERE season = 2025 AND drafted = FALSE
-ORDER BY projected_fpts DESC
-OFFSET 96
-LIMIT 30;
 
 [RESULT_INTERPRETATION]
-Based on the latest stats and excluding players with injury reports, 
-these are solid round-9 targets: [Player A], [Player B], [Player C].
+Based on the latest stats and your wishlist preferences, 
+here are solid round-9 targets:
+🌟 [Player B] (on your wishlist, priority 1) - Your preferred pick
+[Player A] - Top statistical value
+[Player C] - Best available at position
 
 🚫 FAILSAFE GUARDS
 
@@ -220,6 +238,9 @@ Out-of-scope → respond: “I don’t know.”
     tools: {
       queryDatabase: queryDatabaseTool,
       queryNBANews: queryNBANewsTool,
+      getWishlist: getWishlistTool,
+      getWishlistPlayerIds: getWishlistPlayerIdsTool,
+      checkPlayerWishlistStatus: checkPlayerWishlistStatusTool
     },
     messages: convertToModelMessages(messages),
     stopWhen: stepCountIs(8),
