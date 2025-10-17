@@ -7,11 +7,12 @@ import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Ellipsis } from "lucide-react";
+import { Ellipsis, Heart } from "lucide-react";
 import { addPlayerToRoster, getFantasyTeam, getFantasyTeamsByOwner, getTeamRoster } from "@/lib/actions/fantasy-teams";
 import { Position, TeamRoster } from "@/lib/db";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
+import { addToWishlist } from "@/lib/actions/wishlist";
 
 export const splitEligiblePositions = (eligiblePositions: string) => {
     return eligiblePositions.split(",");
@@ -91,9 +92,39 @@ export function useAddPlayer() {
     return { addPlayer, user };
 }
 
+export function useWishlist() {
+    const user = useUser({ or: "return-null" });
+
+    const addPlayerToWishlist = async (player: NbaStats) => {
+        if (!user) {
+            toast.error("You must be logged in to add players to your wishlist");
+            return;
+        }
+
+        try {
+            const response = await addToWishlist({
+                owner: user.id,
+                playerId: player.playerId,
+                season: 2025,
+                priority: 1,
+                notes: "Add to wishlist",
+            });
+
+            console.log("Player added to wishlist", response);
+            toast.success(`${player.player} has been added to your wishlist!`);
+        } catch (error) {
+            console.error("Error adding player to wishlist", error);
+            toast.error("Failed to add player to wishlist. Please try again.");
+        }
+    };
+
+    return { addPlayerToWishlist, user };
+}
+
 // Component to handle actions for each row
 function ActionsCell({ player }: { player: NbaStats }) {
     const { addPlayer, user } = useAddPlayer();
+    const { addPlayerToWishlist } = useWishlist();
 
     const handleAddPlayer = async () => {
         await addPlayer(player);
@@ -101,6 +132,10 @@ function ActionsCell({ player }: { player: NbaStats }) {
     
     const handleViewPlayer = () => {
         console.log("View Player", player.player);
+    };
+
+    const handleAddPlayerToWishlist = async () => {
+        await addPlayerToWishlist(player);
     };
 
     return (
@@ -112,6 +147,10 @@ function ActionsCell({ player }: { player: NbaStats }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={handleAddPlayerToWishlist}>
+                    <Heart className="h-4 w-4" />
+                    Add to Wishlist
+                </DropdownMenuItem>
                 <DropdownMenuItem 
                     onClick={handleAddPlayer}
                     disabled={!user}

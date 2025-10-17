@@ -2,6 +2,7 @@ import { queryDatabaseTool } from '@/app/actions';
 import { queryNBANewsTool } from '@/lib/actions/nba-news';
 import { getWishlistTool, getWishlistPlayerIdsTool, checkPlayerWishlistStatusTool } from '@/lib/actions/wishlist-tool';
 import { openai } from '@ai-sdk/openai';
+import { anthropic } from '@ai-sdk/anthropic';
 import { convertToModelMessages, stepCountIs, streamText, UIMessage } from 'ai';
 
 // Allow streaming responses up to 30 seconds
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
 
   const result = streamText({
-    model: openai('gpt-5-mini'),
+    model: anthropic('claude-haiku-4-5-20251001'),
     maxOutputTokens: 50000,
     system: `NBA Fantasy Draft Assistant 
 🔧 ROLE

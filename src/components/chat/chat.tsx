@@ -3,6 +3,7 @@ import { useChatContext } from "./chat-provider";
 import { useEffect } from "react";
 import { Spinner } from "../ui/spinner";
 import { ChatStatus } from "ai";
+import { MemoizedMarkdown } from "../markdown/memoized-markdown";
 
 export default function Messages() {
     const { chat, clearChat } = useChatContext();
@@ -35,7 +36,9 @@ export default function Messages() {
                 {m.parts.map((part, index) => {
                     switch (part.type) {
                     case 'text':
-                        return <p key={index}>{part.text}</p>;
+                        return (
+                            <MemoizedMarkdown key={`${m.id}-part_${index}`} content={part.text} id={m.id} />
+                        );
                     }
                 })}
                 </div>
