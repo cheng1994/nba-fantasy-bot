@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
-import { openai } from "@ai-sdk/openai"
+import { openai } from "@ai-sdk/openai";
+import { anthropic } from '@ai-sdk/anthropic';
 import { generateObject, tool } from "ai"
 // import { sql } from "drizzle-orm";
 import { sql } from "@vercel/postgres";
@@ -13,10 +14,7 @@ export const queryDatabaseTool = tool({
         query: z.string().describe('The SQL query to execute.'),
     }),
     execute: async ({ query }) => {
-      debugger;
-        console.log('Executing query:', query);
         const data = await runGenerateSQLQuery(query);
-        console.log('Data:', data);
         return data as any; 
     },
 })
@@ -26,7 +24,7 @@ export const generateQuery = async (input: string) => {
 
     try {
         const result = await generateObject({
-            model: openai('gpt-4o'),
+            model: anthropic('claude-haiku-4-5-20251001'),
             system: `You are a helpful assistant that can answer questions and help with tasks, regarding NBA fantasy basketball.
             
             You are able to access a SQL (postgress database) to get information about the NBA. The data stored is from the 2024-2025 NBA season.
@@ -43,7 +41,8 @@ export const generateQuery = async (input: string) => {
                 player_id VARCHAR(20) NOT NULL,
                 age INTEGER,
                 team VARCHAR(10),
-                position VARCHAR(5),
+                position VARCHAR(20),
+                projected_fpts DECIMAL(10,2),
                 fpts_total DECIMAL(10,2),
                 fpts DECIMAL(10,2),
                 games INTEGER,
@@ -77,7 +76,8 @@ export const generateQuery = async (input: string) => {
             )
         
             Only retrival queries are allowed.
-        
+
+            projected_fpts is the average projected fpts for the upcoming season
             fpts_total is the total fantasy points for the player.
             fpts is the fantasy points for the player for the current season.
             games is the number of games the player has played.
@@ -90,6 +90,7 @@ export const generateQuery = async (input: string) => {
                 - age
                 - team
                 - position
+                - projected_fpts
                 - fpts_total
                 - fpts
                 - games
@@ -130,9 +131,24 @@ export const generateQuery = async (input: string) => {
             personal_fouls is the number of personal fouls.
             points is the number of points.
             triple_doubles is the number of triple doubles.
-        
-            When answering questions, only use the information from the table.
-            If the question is not related to the table, say "I don't know".
+
+            nba_news (
+                id SERIAL PRIMARY KEY,
+                player_name VARCHAR(100) NOT NULL,
+                player_id VARCHAR(20) NOT NULL,
+                team VARCHAR(10),
+                title VARCHAR(500) NOT NULL,
+                content TEXT NOT NULL,
+                summary TEXT NOT NULL,
+            )
+
+            player_wishlist (
+                id SERIAL PRIMARY KEY,
+                owner VARCHAR(100) NOT NULL,
+                player_id VARCHAR(20) NOT NULL,
+                priority INTEGER NOT NULL,
+                notes TEXT NOT NULL,
+            )
             `,
             prompt: `Generate a SQL query to answer the following question: ${input}`,
             schema: z.object({
@@ -169,7 +185,6 @@ export const runGenerateSQLQuery = async (query: string) => {
     let data: any;
     try {
       data = await sql.query(query);
-      console.log('Data returned:', data);
     } catch (e: any) {
       if (e.message.includes('relation "unicorns" does not exist')) {
         console.log(

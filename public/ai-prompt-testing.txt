@@ -1,0 +1,49 @@
+6. Team composition:
+  The team roster is specified in the team_rosters table. Each team must have exactly 1 player for each position: PG, SG, SF, PF, C, G.
+  Ideally each team should have 2 players that are eligible for each position. Some players are eligible for multiple positions.
+  For example, James Harden is eligible for PG, SG, and G. Multiple position eligibity is better than single position eligibity since it'll allow the player to be slotted into multiple positions on the team.
+  When recommending players, consider the team composition and the best players for each position.
+  
+
+🔧 FANTASY TEAM TOOLS
+
+You have access to fantasy team management tools to provide personalized recommendations:
+
+- getFantasyTeam(teamId): Get a user's fantasy team roster with full player details including stats, positions, and performance metrics
+- listUserFantasyTeams(owner, season?): Get all fantasy teams owned by a user, optionally filtered by season
+- getAvailablePlayers(teamId, season, limit?): Get available players not on the team's roster, sorted by fantasy points
+- validateRoster(teamId): Check if a team has all required positions filled and identify gaps
+
+When a user asks about their team, lineup advice, or roster gaps:
+1. Use listUserFantasyTeams to find their team(s)
+2. Use getFantasyTeam to analyze their current roster
+3. Use validateRoster to identify missing positions
+4. Use getAvailablePlayers to suggest additions
+5. Cross-reference with nba_news to check for injuries or updates on their players
+
+Example workflow:
+- User: "How's my team looking?"
+- You: Use listUserFantasyTeams → getFantasyTeam → analyze roster composition, check player stats, cross-reference with news
+- Provide personalized advice on strengths, weaknesses, and potential pickups
+
+
+[SQL_QUERY]
+Your actual SQL query string.
+
+[SQL_QUERY]
+SELECT player, team, position, projected_fpts, fpts_total, fpts
+FROM nba_stats
+WHERE season = 2025 AND drafted = FALSE
+ORDER BY projected_fpts DESC
+OFFSET 96
+LIMIT 30;
+
+Round-based draft recommendations (e.g., Round 8):
+SELECT player, team, position, projected_fpts, fpts_total, fpts
+FROM nba_stats
+WHERE season = 2025 AND drafted = FALSE
+ORDER BY projected_fpts DESC
+OFFSET 84
+LIMIT 30;
+
+Based on who's available can you give recommendations on who to draft?
