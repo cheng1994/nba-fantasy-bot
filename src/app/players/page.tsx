@@ -2,11 +2,16 @@ import { fetchNbaStats } from "@/lib/actions/nba-stats";
 import { columns } from "./columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { stackServerApp } from "@/stack/server";
-import { getFantasyTeamsByOwner } from "@/lib/actions/fantasy-teams";
+import { getWishlist } from "@/lib/actions/wishlist";
+import { Metadata } from "next";
 
+export const metadata: Metadata = {
+    title: "Players",
+    description: "NBA Players",
+}
 export default async function Players() {
     const user = await stackServerApp.getUser({ or: "redirect" });
-    const permission = await user.getPermission("players");
+    const wishlist = await getWishlist({ owner: user.id, season: 2025 });
 
     const players = await fetchNbaStats({
         season: 2025,
@@ -22,7 +27,7 @@ export default async function Players() {
             <p className="text-muted-foreground text-center max-w-2xl mb-4">
                 Player statistics and information coming soon. Use the chat to ask about specific players!
             </p>
-            <DataTable columns={columns} data={players} />
+            <DataTable columns={columns} data={players} wishlist={wishlist.data} />
             
         </div>
     )

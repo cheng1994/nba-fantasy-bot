@@ -80,7 +80,11 @@ export async function removeFromWishlist(params: RemoveFromWishlistParams) {
         const validated = removeFromWishlistSchema.parse(params)
         
         await db.delete(playerWishlist)
-            .where(eq(playerWishlist.id, validated.id))
+            .where(and(
+                eq(playerWishlist.owner, validated.owner),
+                eq(playerWishlist.playerId, validated.playerId),
+                eq(playerWishlist.season, validated.season)
+            ))
         
         return { success: true }
     } catch (error) {

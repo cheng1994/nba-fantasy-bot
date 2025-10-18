@@ -12,7 +12,7 @@ export default function Header({ user }: { user: string | null | undefined}) {
 
     return (
         <header className="fixed top-0 left-0 right-0 flex w-full p-4 justify-between items-center dark:border-b-2 dark:border-border z-40 bg-background">
-            <h1 className="text-2xl font-bold"><Link href="/">NBA Fantasy Draft Assistant</Link></h1>
+            <h1 className="text-2xl font-bold"><Link className="flex items-center" href="/"><img src="deep-ball-logo.png" alt="Deep Ball" className="h-8 w-8 mr-2" /> Deep Ball</Link></h1>
             <div className="flex gap-2 ml-8">
                 <Button variant="ghost" asChild>
                     <Link href="/chat">Chat</Link>

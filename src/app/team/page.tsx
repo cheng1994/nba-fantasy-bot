@@ -1,6 +1,12 @@
 import { stackServerApp } from "@/stack/server";
 import { getFantasyTeamsByOwner } from "@/lib/actions/fantasy-teams";
 import CreateTeam from "./create-team";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Team",
+    description: "Your Fantasy Team",
+}
 
 export default async function Team() {
     const user = await stackServerApp.getUser({ or: "redirect" });
