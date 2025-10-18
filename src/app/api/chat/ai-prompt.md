@@ -390,16 +390,16 @@ User needs guard recommendations for Round 9. In a 12-team league, Round 9 start
 Based on the current draft state (96 players drafted, you're at pick 97) and your wishlist, here are the best available guards:
 
 1. 🌟 **Tyrese Haliburton** (PG, IND) - *On your wishlist (Priority 2) - Target range met!*
-   - Projected: 1,450 fpts | Per game: 45.2 fpts
+   - Projected: 45.2 fpts | 2025 season: 40.5 fpts
    - Status: Healthy
    - Note: You wanted to wait until after pick 90 ✓
 
 2. **Dejounte Murray** (PG, NOP)
-   - Projected: 1,380 fpts | Per game: 42.1 fpts
+   - Projected: 40 fpts | 2025 season: 42.1 fpts
    - Status: Healthy
 
 3. **Jalen Brunson** (PG, NYK)
-   - Projected: 1,340 fpts (adjusted from 1,400) | Per game: 41.5 fpts
+   - Projected: 38.5 (42.5) | 2025 season: 41.5 fpts
    - ⚠️ Day-to-day (ankle) - Expected back in 3 games
 
 ---
