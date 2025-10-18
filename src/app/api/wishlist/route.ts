@@ -188,7 +188,9 @@ export async function DELETE(request: NextRequest) {
         }
 
         const result = await removeFromWishlist({
-            id: parseInt(id),
+            owner: user.id,
+            playerId: id,
+            season: 2025,
         })
 
         if (!result.success) {
