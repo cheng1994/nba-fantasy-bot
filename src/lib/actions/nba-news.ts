@@ -335,15 +335,24 @@ export const queryNBANewsTool = tool({
         query.trim().toLowerCase().includes("truncate") ||
         query.trim().toLowerCase().includes("create")
       ) {
-        throw new Error("Only SELECT queries are allowed");
+        console.error("Invalid NBA news query attempt:", query.substring(0, 100));
+        return { 
+          error: "Only SELECT queries are allowed",
+          rows: [] 
+        };
       }
 
       const data = await sql.query(query);
-      console.log('NBA News query result:', data);
+      console.log('NBA News query result:', data.rows.length, 'rows');
       return data.rows;
     } catch (error) {
       console.error('Error querying NBA news:', error);
-      throw error;
+      
+      // Return error as data instead of throwing
+      return { 
+        error: error instanceof Error ? error.message : 'Failed to query NBA news',
+        rows: [] 
+      };
     }
   },
 });
