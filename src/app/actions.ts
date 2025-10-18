@@ -14,8 +14,16 @@ export const queryDatabaseTool = tool({
         query: z.string().describe('The SQL query to execute.'),
     }),
     execute: async ({ query }) => {
-        const data = await runGenerateSQLQuery(query);
-        return data as any; 
+        try {
+            const data = await runGenerateSQLQuery(query);
+            return data as any; 
+        } catch (error) {
+            console.error('Error in queryDatabaseTool:', error);
+            return { 
+                error: error instanceof Error ? error.message : 'Failed to execute database query',
+                rows: [] 
+            };
+        }
     },
 })
 
@@ -165,37 +173,43 @@ export const generateQuery = async (input: string) => {
 
 export const runGenerateSQLQuery = async (query: string) => {
     "use server";
-    debugger;
-    // Check if the query is a SELECT statement
-    if (
-      !query.trim().toLowerCase().startsWith("select") ||
-      query.trim().toLowerCase().includes("drop") ||
-      query.trim().toLowerCase().includes("delete") ||
-      query.trim().toLowerCase().includes("insert") ||
-      query.trim().toLowerCase().includes("update") ||
-      query.trim().toLowerCase().includes("alter") ||
-      query.trim().toLowerCase().includes("truncate") ||
-      query.trim().toLowerCase().includes("create") ||
-      query.trim().toLowerCase().includes("grant") ||
-      query.trim().toLowerCase().includes("revoke")
-    ) {
-      throw new Error("Only SELECT queries are allowed");
-    }
-  
-    let data: any;
+    
     try {
-      data = await sql.query(query);
+        // Check if the query is a SELECT statement
+        if (
+          !query.trim().toLowerCase().startsWith("select") ||
+          query.trim().toLowerCase().includes("drop") ||
+          query.trim().toLowerCase().includes("delete") ||
+          query.trim().toLowerCase().includes("insert") ||
+          query.trim().toLowerCase().includes("update") ||
+          query.trim().toLowerCase().includes("alter") ||
+          query.trim().toLowerCase().includes("truncate") ||
+          query.trim().toLowerCase().includes("create") ||
+          query.trim().toLowerCase().includes("grant") ||
+          query.trim().toLowerCase().includes("revoke")
+        ) {
+          console.error("Invalid query attempt:", query.substring(0, 100));
+          throw new Error("Only SELECT queries are allowed");
+        }
+      
+        const data = await sql.query(query);
+        return data.rows as Result<any, any>[];
     } catch (e: any) {
-      if (e.message.includes('relation "unicorns" does not exist')) {
-        console.log(
-          "Table does not exist, creating and seeding it with dummy data now...",
-        );
-        // throw error
-        throw Error("Table does not exist");
-      } else {
-        throw e;
+      console.error('SQL query error:', e.message);
+      
+      if (e.message.includes('relation') && e.message.includes('does not exist')) {
+        throw new Error(`Database table not found. Please ensure the database is properly set up.`);
       }
+      
+      if (e.message.includes('syntax error')) {
+        throw new Error(`Invalid SQL syntax: ${e.message}`);
+      }
+      
+      if (e.message.includes('column') && e.message.includes('does not exist')) {
+        throw new Error(`Invalid column name in query: ${e.message}`);
+      }
+      
+      // Re-throw with more context
+      throw new Error(`Database query failed: ${e.message}`);
     }
-  
-    return data.rows as Result<any, any>[];
 }
