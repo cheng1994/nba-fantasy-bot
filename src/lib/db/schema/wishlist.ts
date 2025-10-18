@@ -57,7 +57,9 @@ export const addToWishlistSchema = z.object({
 
 // Schema for removing from wishlist
 export const removeFromWishlistSchema = z.object({
-    id: z.number().int().positive(),
+    owner: z.string().min(1),
+    playerId: z.string().min(1),
+    season: z.number().int().min(2020).max(2030),
 })
 
 // Schema for getting wishlist items

@@ -1,18 +1,46 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, createColumnHelper, Table } from "@tanstack/react-table";
 import { NbaStats } from "@/lib/db/schema/nba-stats";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Ellipsis, Heart } from "lucide-react";
+import { Ellipsis, Heart, Trash } from "lucide-react";
 import { addPlayerToRoster, getFantasyTeam, getFantasyTeamsByOwner, getTeamRoster } from "@/lib/actions/fantasy-teams";
 import { Position, TeamRoster } from "@/lib/db";
 import { toast } from "sonner";
 import { useUser } from "@stackframe/stack";
-import { addToWishlist } from "@/lib/actions/wishlist";
+import { addToWishlist, removeFromWishlist } from "@/lib/actions/wishlist";
+import { PlayerWishlist } from "@/lib/db/schema/wishlist";
+
+// Extend the TableMeta type to include our custom methods
+declare module "@tanstack/react-table" {
+    interface TableMeta<TData> {
+        addToWishlist?: (item: PlayerWishlist) => void;
+        removeFromWishlist?: (playerId: string) => void;
+    }
+}
+
+export interface ColumnVisibility {
+    player: boolean;
+    team: boolean;
+    position: boolean;
+    projectedFpts: boolean;
+    fptsTotal: boolean;
+    fpts: boolean;
+    games: boolean;
+    gamesStarted: boolean;
+    minutesPlayed: boolean;
+    assists: boolean;
+    totalRebounds: boolean;
+    steals: boolean;
+    blocks: boolean;
+    points: boolean;
+    drafted: boolean;
+    actions: boolean;
+}
 
 export const splitEligiblePositions = (eligiblePositions: string) => {
     return eligiblePositions.split(",");
@@ -98,7 +126,7 @@ export function useWishlist() {
     const addPlayerToWishlist = async (player: NbaStats) => {
         if (!user) {
             toast.error("You must be logged in to add players to your wishlist");
-            return;
+            return null;
         }
 
         try {
@@ -112,19 +140,42 @@ export function useWishlist() {
 
             console.log("Player added to wishlist", response);
             toast.success(`${player.player} has been added to your wishlist!`);
+            return response;
         } catch (error) {
             console.error("Error adding player to wishlist", error);
             toast.error("Failed to add player to wishlist. Please try again.");
+            return null;
         }
     };
 
-    return { addPlayerToWishlist, user };
+    const removePlayerFromWishlist = async (player: NbaStats) => {
+        if (!user) {
+            toast.error("You must be logged in to remove players from your wishlist");
+            return null;
+        }
+
+        try {
+            const response = await removeFromWishlist({
+                owner: user.id,
+                playerId: player.playerId,
+                season: 2025,
+            });
+            toast.success(`${player.player} has been removed from your wishlist!`);
+            return response;
+        } catch (error) {
+            console.error("Error removing player from wishlist", error);
+            toast.error("Failed to remove player from wishlist. Please try again.");
+            return null;
+        }
+    };
+
+    return { addPlayerToWishlist, removePlayerFromWishlist, user };
 }
 
 // Component to handle actions for each row
-function ActionsCell({ player }: { player: NbaStats }) {
+function ActionsCell({ player, table }: { player: NbaStats; table: Table<NbaStats> }) {
     const { addPlayer, user } = useAddPlayer();
-    const { addPlayerToWishlist } = useWishlist();
+    const { addPlayerToWishlist, removePlayerFromWishlist } = useWishlist();
 
     const handleAddPlayer = async () => {
         await addPlayer(player);
@@ -135,7 +186,19 @@ function ActionsCell({ player }: { player: NbaStats }) {
     };
 
     const handleAddPlayerToWishlist = async () => {
-        await addPlayerToWishlist(player);
+        const response = await addPlayerToWishlist(player);
+        
+        // Update the local wishlist in the table if successful
+        if (response?.data && table.options.meta?.addToWishlist) {
+            table.options.meta.addToWishlist(response.data);
+        }
+    };
+
+    const handleRemovePlayerFromWishlist = async () => {
+        const response = await removePlayerFromWishlist(player);
+        if (response?.success && table.options.meta?.removeFromWishlist) {
+            table.options.meta.removeFromWishlist(player.playerId);
+        }
     };
 
     return (
@@ -150,6 +213,10 @@ function ActionsCell({ player }: { player: NbaStats }) {
                 <DropdownMenuItem onClick={handleAddPlayerToWishlist}>
                     <Heart className="h-4 w-4" />
                     Add to Wishlist
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleRemovePlayerFromWishlist}>
+                    <Trash className="h-4 w-4" />
+                    Remove from Wishlist
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                     onClick={handleAddPlayer}
@@ -169,6 +236,7 @@ export const columns: ColumnDef<NbaStats>[] = [
     {
         accessorKey: "player",
         header: "Player",
+        filterFn: 'includesString'
     },
     {
         accessorKey: "team",
@@ -197,28 +265,76 @@ export const columns: ColumnDef<NbaStats>[] = [
         )
     },
     {
+        accessorKey: "points",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Pts" />
+        ),
+        cell: ({ row }) => {
+            const games = row.original.games || 0;
+            return <div>{row.original.points ? (row.original.points / games).toFixed(2) : 0}</div>
+        }
+    },
+    {
+        accessorKey: "games",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Games" />
+        )
+    },
+    {
+        accessorKey: "gamesStarted",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Started" />
+        )
+    },
+    {
+        accessorKey: "minutesPlayed",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Minutes Played" />
+        ),
+        cell: ({ row }) => {
+            const games = row.original.games || 0;
+            return <div>{row.original.minutesPlayed ? (row.original.minutesPlayed / games).toFixed(2) : 0}</div>
+        }
+    },
+    {
         accessorKey: "assists",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Asts" />
-        )
+        ),
+        cell: ({ row }) => {
+            const games = row.original.games || 0;
+            return <div>{row.original.assists ? (row.original.assists / games).toFixed(2) : 0}</div>
+        }
     },
     {
         accessorKey: "totalRebounds",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Rebs" />
-        )
+        ),
+        cell: ({ row }) => {
+            const games = row.original.games || 0;
+            return <div>{row.original.totalRebounds ? (row.original.totalRebounds / games).toFixed(2) : 0}</div>
+        }
     },
     {
         accessorKey: "steals",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Stls" />
-        )
+        ),
+        cell: ({ row }) => {
+            const games = row.original.games || 0;
+            return <div>{row.original.steals ? (row.original.steals / games).toFixed(2) : 0}</div>
+        }
     },
     {
         accessorKey: "blocks",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Blks" />
-        )
+        ),
+        cell: ({ row }) => {
+            const games = row.original.games || 0;
+            return <div>{row.original.blocks ? (row.original.blocks / games).toFixed(2) : 0}</div>
+        }
     },
     {
         accessorKey: "drafted",
@@ -243,8 +359,8 @@ export const columns: ColumnDef<NbaStats>[] = [
     {
         id: "actions",
         header: "Actions",
-        cell: ({ row }) => {
-            return <ActionsCell player={row.original} />;
+        cell: ({ row, table }) => {
+            return <ActionsCell player={row.original} table={table} />;
         }
     }
 ];

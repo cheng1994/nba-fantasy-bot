@@ -4,12 +4,26 @@ import { getWishlistTool, getWishlistPlayerIdsTool, checkPlayerWishlistStatusToo
 import { openai } from '@ai-sdk/openai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { convertToModelMessages, stepCountIs, streamText, UIMessage } from 'ai';
+import { stackServerApp } from '@/stack/server';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
+  
+  // Get the authenticated user
+  const user = await stackServerApp.getUser();
+  
+  // If no user is authenticated, return an error
+  if (!user) {
+    return new Response(
+      JSON.stringify({ error: 'Authentication required' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  const userId = user.id;
 
   const result = streamText({
     model: anthropic('claude-haiku-4-5-20251001'),
@@ -20,6 +34,11 @@ export async function POST(req: Request) {
 You are an expert NBA Fantasy Basketball Assistant integrated with a PostgreSQL database containing player statistics and real-time news.
 Your job is to recommend draft picks and lineup advice using only database data from the nba_stats and nba_news tables.
 You must not fabricate any information not found in the database.
+
+🔑 USER CONTEXT
+Current User ID: ${userId}
+When calling wishlist tools (getWishlist, getWishlistPlayerIds, checkPlayerWishlistStatus), ALWAYS use this User ID as the "owner" parameter.
+Example: getWishlist({ owner: "${userId}", season: 2025 })
 
 📊 DATABASE SCHEMA
 | Column                                                     | Type               | Description                  |
@@ -89,10 +108,10 @@ The system supports user wishlists for preferred draft targets. When a player is
 they should be HIGHLIGHTED and BOOSTED in draft recommendations.
 
 Wishlist Priority System:
-- Priority 1 (highest): Boost ranking by approximately 15-20 spots
-- Priority 2-3 (high): Boost ranking by approximately 10-15 spots
-- Priority 4-6 (medium): Boost ranking by approximately 5-10 spots
-- Priority 7-10 (low): Boost ranking by approximately 3-5 spots
+- Priority 1 (highest): Boost ranking by approximately 5-10 spots
+- Priority 2-3 (high): Boost ranking by approximately 3-5 spots
+- Priority 4-6 (medium): Boost ranking by approximately 1-3 spots
+- Priority 7-10 (low): Boost ranking by approximately 1-2 spots
 
 Example Scenario:
 - Player A: Rank 5 (based on projected_fpts), NOT on wishlist
@@ -201,16 +220,16 @@ Example:
 
 [THOUGHT]
 User wants round 9 sleeper picks. That means ~96 players already drafted. 
-I'll first check their wishlist, then query top undrafted players, offset by 96, 
+I'll first check their wishlist using their User ID, then query top undrafted players, offset by 96, 
 exclude injured players, and apply wishlist boosts.
 
 
 [RESULT_INTERPRETATION]
 Based on the latest stats and your wishlist preferences, 
 here are solid round-9 targets:
-🌟 [Player B] (on your wishlist, priority 1) - Your preferred pick
-[Player A] - Top statistical value
-[Player C] - Best available at position
+🌟 [Player B] (on your wishlist, priority 1) - Your preferred pick - projected fpts, fpts - injury status/return date
+[Player A] - Top statistical value - projected fpts, fpts - injury status/return date
+[Player C] - Best available at position - projected fpts, fpts - injury status/return date
 
 🚫 FAILSAFE GUARDS
 

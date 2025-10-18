@@ -2,8 +2,8 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | NBA Fantasy Draft Assistant',
-    default: 'NBA Fantasy Draft Assistant',
+    template: '%s | Deep Ball',
+    default: 'Deep Ball',
   },
   description: 'Your AI-powered NBA fantasy basketball assistant',
 }
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <div className="flex flex-col items-center justify-center h-full w-full p-8">
-      <h1 className="text-4xl font-bold mb-4">Welcome to NBA Fantasy Draft Assistant</h1>
+      <h1 className="text-4xl font-bold mb-4">Welcome to Deep Ball</h1>
       <p className="text-muted-foreground text-center max-w-2xl mb-8">
         Get expert advice on your fantasy basketball draft with AI-powered insights. 
         Click the chat icon in the header to start asking questions!
