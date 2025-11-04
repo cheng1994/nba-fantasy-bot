@@ -29,7 +29,7 @@ import {
     claimWaiverSchema,
 } from '@/lib/db/schema/league';
 import { fantasyTeams } from '@/lib/db/schema/fantasy-teams';
-import { eq, and, desc, sql, or } from 'drizzle-orm';
+import { eq, and, desc, sql, or, inArray } from 'drizzle-orm';
 
 /**
  * Create a new league
@@ -547,9 +547,7 @@ export const getUserLeagues = async (userId: string, season?: number) => {
         const memberships = await db
             .select()
             .from(leagueMemberships)
-            .where(
-                sql`${leagueMemberships.teamId} = ANY(${teamIds})`
-            );
+            .where(inArray(leagueMemberships.teamId, teamIds));
         
         if (memberships.length === 0) {
             return [];
@@ -561,7 +559,7 @@ export const getUserLeagues = async (userId: string, season?: number) => {
         const userLeagues = await db
             .select()
             .from(leagues)
-            .where(sql`${leagues.id} = ANY(${leagueIds})`);
+            .where(inArray(leagues.id, leagueIds));
         
         return userLeagues;
     } catch (error) {
